@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soru Testi: 3D Prototipleme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 250px;
+            margin: auto;
+        }
+        #progress-bar { transition: width 0.3s ease-out; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .error-item {
+            border-left: 4px solid #f43f5e;
+            background: #fff1f2;
+        }
+    </style>
+</head>
+<body class="text-slate-900 p-2 md:p-8">
+
+    <div id="app" class="max-w-4xl mx-auto">
+        <!-- BAŞLANGIÇ EKRANI -->
+        <div id="start-screen" class="glass-card rounded-3xl p-8 md:p-12 shadow-2xl text-center border-t-8 border-indigo-600 fade-in">
+            <div class="text-6xl mb-6 text-indigo-600">⚙️</div>
+            <h1 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">Soru Testi</h1>
+            <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+                Hızlı Prototipleme, 3D Teknolojileri ve RepRap Hareketi üzerine teknik değerlendirme testi.
+            </p>
+            <div class="bg-indigo-50 rounded-2xl p-6 mb-8 border border-indigo-100 max-w-md mx-auto">
+                <div class="flex justify-around text-indigo-900 font-bold">
+                    <div class="text-center">
+                        <span class="block text-3xl">50</span>
+                        <span class="text-xs uppercase opacity-60">Soru</span>
+                    </div>
+                    <div class="w-px bg-indigo-200"></div>
+                    <div class="text-center">
+                        <span class="block text-3xl">100%</span>
+                        <span class="text-xs uppercase opacity-60">Teknik</span>
+                    </div>
+                </div>
+            </div>
+            <button id="start-btn" onclick="quiz.start()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 px-16 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 tracking-wide">
+                TESTİ BAŞLAT
+            </button>
+        </div>
+
+        <!-- TEST KONTEYNERI -->
+        <div id="quiz-container" class="hidden fade-in">
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div>
+                    <span class="text-xs font-black text-indigo-600 uppercase tracking-widest text-indigo-500">Test İlerlemesi</span>
+                    <h3 class="text-xl font-bold text-slate-800" id="progress-text">Soru 1 / 50</h3>
+                </div>
+                <div class="text-right">
+                    <span id="score-live" class="bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full text-sm font-bold shadow-sm">Puan: 0</span>
+                </div>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-3 mb-8 overflow-hidden">
+                <div id="progress-bar" class="bg-indigo-600 h-full" style="width: 2%"></div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-6 md:p-10 shadow-xl min-h-[500px] flex flex-col justify-between">
+                <div id="question-area">
+                    <h2 id="question-title" class="text-2xl font-extrabold text-slate-800 mb-8 leading-tight"></h2>
+                    <div id="options-grid" class="grid grid-cols-1 gap-4"></div>
+                </div>
+                <div class="mt-10 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-100 pt-6">
+                    <p class="text-slate-400 text-xs italic">Devam etmek için bir cevap seçmelisiniz</p>
+                    <button id="next-btn" onclick="quiz.next()" disabled class="w-full md:w-auto bg-slate-300 text-white font-black py-4 px-12 rounded-2xl cursor-not-allowed transition-all shadow-lg">
+                        SONRAKİ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SONUÇ EKRANI -->
+        <div id="results-screen" class="hidden fade-in space-y-8">
+            <div class="glass-card rounded-3xl p-8 md:p-12 shadow-2xl border-t-8 border-indigo-600 text-center">
+                <div class="text-5xl mb-4">🏆</div>
+                <h2 class="text-4xl font-black text-slate-900 mb-2">Test Tamamlandı!</h2>
+                <div id="final-score" class="text-7xl font-black text-indigo-600 mb-6">0 / 50</div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center text-left">
+                    <div class="chart-container">
+                        <canvas id="resultsChart"></canvas>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xl font-bold text-indigo-900 mb-4">Sonuç Analizi</h3>
+                        <div id="performance-summary" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
+                    <button onclick="quiz.copyResults()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all">
+                        <span>📋</span> Sonuçları Kopyala
+                    </button>
+                    <button onclick="quiz.sendEmail()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all">
+                        <span>📧</span> E-posta ile Gönder
+                    </button>
+                    <button onclick="window.location.reload()" class="bg-white hover:bg-slate-50 text-slate-600 font-bold py-4 px-6 rounded-xl border-2 border-slate-200 transition-all">
+                        <span>🔄</span> Yeniden Başlat
+                    </button>
+                </div>
+            </div>
+
+            <!-- HATA LİSTESİ -->
+            <div id="error-section" class="hidden fade-in bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="h-8 w-2 bg-rose-500 rounded-full"></div>
+                    <h3 class="text-2xl font-black text-slate-800">Yanlış Cevapların İncelenmesi</h3>
+                </div>
+                <div id="error-list" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <textarea id="copy-buffer" class="fixed -top-full left-0 opacity-0 pointer-events-none"></textarea>
+
+    <script>
+        const quizData = [
+            { q: "Plastik tozunu kaynaştırmak için lazer kullanan teknoloji hangisidir?", a: ["SLS", "FDM", "SLA", "LOM"], c: 0 },
+            { q: "3D baskı için evrensel dosya formatı nedir?", a: ["GCODE", "CAD", "STL", "OBJ"], c: 2 },
+            { q: "Stereolitografi (SLA) malzemeyi ne kullanarak sertleştirir?", a: ["Basınç", "UV Işığı", "Isı", "Kesme"], c: 1 },
+            { q: "FFF ve FDM arasındaki fark nedir?", a: ["FFF metal kullanır", "Teknolojileri tamamen farklıdır", "Teknik fark yoktur", "FDM tescilli marka, FFF açık kaynak terimidir"], c: 3 },
+            { q: "Kesilmiş kağıt veya plastik katmanlarını kullanan teknik hangisidir?", a: ["LOM", "SLS", "Binder Jetting", "FDM"], c: 0 },
+            { q: "Binder Jetting (Püskürtmeli birleştirme) neye dayanır?", a: ["Filament eritme", "Lazer kürleme", "Tozu sıvı yapıştırıcı ile birleştirme", "Manuel katmanlama"], c: 2 },
+            { q: "Adrian Bowyer RepRap projesini hangi yılda kurdu?", a: ["2000", "2010", "2005", "2015"], c: 2 },
+            { q: "Bir RepRap yazıcısının en temel özelliği nedir?", a: ["Çok pahalı olması", "Kendi parçalarını basabilmesi", "Sadece Arduino Uno kullanması", "Yazılım gerektirmemesi"], c: 1 },
+            { q: "Arduino, hobby amaçlı 3D baskıda neden temel bir öğedir?", a: ["Tasarım yazılımıdır", "Kapalı bir donanımdır", "Açık kaynaklı bir donanımdır", "Bir filament markasıdır"], c: 2 },
+            { q: "Filamenti ısıtıp eriten parçaya ne ad verilir?", a: ["Yatak", "Hotend (Ekstrüder ucu)", "Fan", "Makara"], c: 1 },
+            { q: "Bir fikirden sonraki ilk adım nedir?", a: ["Baskı almak", "CAD tasarımı veya nesne temini", "Filament satın almak", "Dilimleme yapmak"], c: 1 },
+            { q: "3D tasarımların paylaşıldığı en ünlü depo hangisidir?", a: ["Thingiverse", "Spotify", "Wikipedia", "Instagram"], c: 0 },
+            { q: "Fusion 360 veya Solidworks ne tür yazılımlardır?", a: ["CAD", "Dilimleyici", "Firmware", "Onarıcı"], c: 0 },
+            { q: "Netfabb yazılımı temel olarak ne için kullanılır?", a: ["Çizim yapmak", "G-Kodu oluşturmak", "Mesh onarımı ve oryantasyon kontrolü", "Tasarım satmak"], c: 2 },
+            { q: "Dilimleme (Slicing) işlemi nedir?", a: ["3D modeli katmanlara ve G-Koduna dönüştürmek", "Nozulu temizlemek", "Parçayı boyamak", "Parçaları birleştirmek"], c: 0 },
+            { q: "Slic3r yazılımı doğrudan hangisine evrilmiştir?", a: ["Cura", "Simplify3D", "Blender", "PrusaSlicer"], c: 3 },
+            { q: "Hangi malzeme biyobozunur ve basımı kolaydır?", a: ["ABS", "Naylon", "Polikarbonat", "PLA"], c: 3 },
+            { q: "ABS malzemenin çarpılmasını (warping) önlemek için ne gerekir?", a: ["%100 Fan hızı", "UV Işığı", "Isıtıcı tabla ve stabil ortam", "Lazer kesim"], c: 2 },
+            { q: "Katman yüksekliği (layer height) doğrudan neyi etkiler?", a: ["Rengi", "Motor ağırlığını", "Dikey çözünürlüğü ve süreyi", "Yazıcı markasını"], c: 2 },
+            { q: "Akış (Flow) nedir?", a: ["Ekstrüde edilen malzeme miktarı", "Fanların hızı", "Ortam sıcaklığı", "Taban tasarımı"], c: 0 },
+            { q: "Ender 3 ne tür bir yapıya sahip yazıcıdır?", a: ["Delta", "Kartezyen", "Polar", "SCARA"], c: 1 },
+            { q: "Ender 3 Neo modelinde standart olarak ne bulunur?", a: ["Lazer kazıyıcı", "CR-Touch otomatik seviyeleme", "Wi-Fi kamera", "Filament kurutucu"], c: 1 },
+            { q: "Wasp Delta 2040 hangi mimarisiyle tanınır?", a: ["Yüksek hızlı Delta yapısı", "Kübik yapı", "Reçine yapısı", "Kağıt yapısı"], c: 0 },
+            { q: "Bir mesh yapısının 'Manifold' olmaması ne anlama gelir?", a: ["Çok güzel olması", "Geometrik hatalar veya delikler olması", "Kırmızı renkli olması", "Çok büyük olması"], c: 1 },
+            { q: "G-Kodu (GCode) ne tür bir dildir?", a: ["Makineler için sayısal komutlar", "Görsel programlama", "Sanatsal tasarım", "Veritabanı dili"], c: 0 },
+            { q: "Parçanın iç doluluk oranını hangi parametre kontrol eder?", a: ["Kabuklar (Shells)", "Brim", "Skirt", "Dolgu (Infill)"], c: 3 },
+            { q: "'Brim' (Kenarlık) ne işe yarar?", a: ["Tablaya yapışmayı artırır", "Malzeme tasarrufu sağlar", "Nozulu soğutur", "Parçayı temizler"], c: 0 },
+            { q: "Ekstrüder sıcaklığı çok düşük olursa ne olur?", a: ["Plastik yanar", "Baskı hızlanır", "Tıkanmalar ve kötü yapışma", "Etkisi yoktur"], c: 2 },
+            { q: "PLA filamenti neden üretilir?", a: ["Petrol", "Kum", "Geri dönüştürülmüş ahşap", "Mısır nişastası veya şeker kamışı"], c: 3 },
+            { q: "Geri Çekme (Retraction) nedir?", a: ["Z ekseni hareketi", "İplenmeyi önlemek için filamentin geri çekilmesi", "Yazıcıyı kapatmak", "Tablayı temizlemek"], c: 1 },
+            { q: "Dilimleyicide %100 Dolgu (Infill) ne anlama gelir?", a: ["İçi boş parça", "Şeffaf parça", "Tamamen dolu parça", "Okuma hatası"], c: 2 },
+            { q: "Filamenti ısıtan bileşen hangisidir?", a: ["Motor", "Ekran", "Güç kaynağı", "Hotend"], c: 3 },
+            { q: "Delta yazıcılar nasıl hareket eder?", a: ["Üç eklemli kol ile", "İki çapraz kayış ile", "Tek bir merkezi motor ile", "Lastik tekerlekler ile"], c: 0 },
+            { q: "Katman soğutma fanı ne işe yarar?", a: ["Motorları soğutur", "Yeni serilen plastiği soğutur", "Tozu temizler", "Dekorasyon"], c: 1 },
+            { q: "Overhang (Sarkma) nedir?", a: ["Çok küçük bir parça", "Bir filament türü", "Desteksiz asılı kalan kısımlar", "Veri kablosu"], c: 2 },
+            { q: "Destek (Support) yapıları ne zaman gereklidir?", a: ["Havada kalan dik açılar olduğunda", "Parça düz olduğunda", "Çok dolgu kullandığımızda", "Tabla soğuk olduğunda"], c: 0 },
+            { q: "RepRap lisansı genellikle nedir?", a: ["GPL (Açık Kaynak Yazılım/Donanım)", "Microsoft mülkiyetinde", "Özel mülkiyet", "Sadece üniversiteler içindir"], c: 0 },
+            { q: "Hangi malzeme güçlü bir yanık plastik (stiren) kokusu yayar?", a: ["PLA", "ABS", "PETG", "Ahşap"], c: 1 },
+            { q: "Blender, Solidworks'ten hangi yönüyle ayrılır?", a: ["Daha pahalı olması", "Organik ve sanatsal modelleme odaklı olması", "Sadece mühendisler içindir", "STL dışa aktarımı yapmaz"], c: 1 },
+            { q: "Bir STL dosyası yüzeyi ne ile temsil eder?", a: ["Piksel", "Denklem", "Üçgenler (Teselasyon)", "Nokta bulutları"], c: 2 },
+            { q: "Tipik baskı hızı genellikle hangi aralıktadır?", a: ["40-80 mm/s", "5-10 mm/s", "500-1000 mm/s", "1-2 mm/s"], c: 0 },
+            { q: "Z-Offset nedir?", a: ["Parçanın genişliği", "Yazıcının adı", "Nozul ile tabla arasındaki mesafe", "Fan hızı"], c: 2 },
+            { q: "RepRap projesi neyin demokratikleşmesini hedefler?", a: ["Kişisel üretim", "Müzik", "Tarım", "Enerji"], c: 0 },
+            { q: "Marlin neye bir örnektir?", a: ["CAD tasarımı", "Filament markası", "3D yazıcı yazılımı (Firmware)", "Dilimleyici"], c: 2 },
+            { q: "Yatay yan hareketi hangi eksen kontrol eder?", a: ["X Ekseni", "Y Ekseni", "Z Ekseni", "E Ekseni"], c: 0 },
+            { q: "Isıtıcı tabla (Heated bed) hangi malzemede opsiyoneldir?", a: ["ABS", "PLA", "Naylon", "Polikarbonat"], c: 1 },
+            { q: "TraceParts ne tür bir portaldır?", a: ["Haber sitesi", "Yazıcı satış sitesi", "Teknik CAD modelleri ve standart parçalar", "Kullanıcı sohbet kanalı"], c: 2 },
+            { q: "'Skirt' (Etek) ne işe yarar?", a: ["Parçayı sabitlemek", "Ekstrüderi baskı öncesi hazırlamak (purging)", "Süsleme", "Isı yalıtımı"], c: 1 },
+            { q: "Bir yazıcının 'Open Source' (Açık Kaynak) olması ne demektir?", a: ["Planlarının ve kodlarının halka açık olması", "Ücretsiz olması", "Kablosuz olması", "İnternetten satın alınması"], c: 0 },
+            { q: "3D baskı bir eklemeli (additive) teknoloji midir?", a: ["Hayır, eksiltmelidir", "Sadece kağıt prototipler içindir", "Evet, katman katman malzeme ekler", "Artık kullanılmıyor"], c: 2 }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedOption = null;
+        let chartInstance = null;
+        let errors = [];
+
+        const quiz = {
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-container').classList.remove('hidden');
+                this.renderQuestion();
+            },
+            renderQuestion() {
+                const q = quizData[currentQuestion];
+                document.getElementById('question-title').innerText = q.q;
+                document.getElementById('progress-text').innerText = `Soru ${currentQuestion + 1} / 50`;
+                document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / 50) * 100}%`;
+                
+                const grid = document.getElementById('options-grid');
+                grid.innerHTML = '';
+                
+                q.a.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn w-full text-left p-5 rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all font-semibold flex items-center gap-4 bg-white";
+                    btn.innerHTML = `<span class="h-10 w-10 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-sm font-black text-slate-500 border border-slate-200">${String.fromCharCode(65 + idx)}</span> <span class="text-slate-700">${opt}</span>`;
+                    btn.onclick = () => this.selectOption(idx, btn);
+                    grid.appendChild(btn);
+                });
+                
+                const nextBtn = document.getElementById('next-btn');
+                nextBtn.disabled = true;
+                nextBtn.className = "w-full md:w-auto bg-slate-200 text-white font-black py-4 px-12 rounded-2xl cursor-not-allowed transition-all shadow-lg";
+                nextBtn.innerText = currentQuestion === 49 ? "TESTİ BİTİR" : "SONRAKİ SORU";
+            },
+            selectOption(idx, btn) {
+                selectedOption = idx;
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    b.classList.remove('border-indigo-600', 'bg-indigo-50', 'ring-4', 'ring-indigo-100');
+                    b.classList.add('border-slate-100', 'bg-white');
+                });
+                
+                btn.classList.remove('border-slate-100', 'bg-white');
+                btn.classList.add('border-indigo-600', 'bg-indigo-50', 'ring-4', 'ring-indigo-100');
+                
+                const nextBtn = document.getElementById('next-btn');
+                nextBtn.disabled = false;
+                nextBtn.className = "w-full md:w-auto bg-indigo-600 text-white font-black py-4 px-12 rounded-2xl cursor-pointer transition-all shadow-lg hover:bg-indigo-700 active:scale-95";
+            },
+            next() {
+                const correctIdx = quizData[currentQuestion].c;
+                if (selectedOption === correctIdx) {
+                    score++;
+                } else {
+                    errors.push({
+                        q: quizData[currentQuestion].q,
+                        correct: quizData[currentQuestion].a[correctIdx]
+                    });
+                }
+                
+                document.getElementById('score-live').innerText = `Puan: ${score}`;
+                
+                currentQuestion++;
+                if (currentQuestion < quizData.length) {
+                    selectedOption = null;
+                    this.renderQuestion();
+                } else {
+                    this.showResults();
+                }
+            },
+            showResults() {
+                document.getElementById('quiz-container').classList.add('hidden');
+                document.getElementById('results-screen').classList.remove('hidden');
+                document.getElementById('final-score').innerText = `${score} / 50`;
+                
+                const percentage = (score / 50) * 100;
+                let feedback = percentage >= 90 ? "Uzman" : percentage >= 70 ? "İleri Düzey" : percentage >= 50 ? "Teknisyen" : "Başlangıç Düzeyi";
+                let colorClass = percentage >= 50 ? "text-emerald-600" : "text-rose-600";
+
+                document.getElementById('performance-summary').innerHTML = `
+                    <div class="flex justify-between items-center py-2 border-b border-slate-200">
+                        <span class="font-bold text-slate-500">Değerlendirme:</span>
+                        <span class="font-black ${colorClass}">${feedback}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-200">
+                        <span class="font-bold text-slate-500">Yüzde:</span>
+                        <span class="font-black text-slate-800">%${percentage}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="font-bold text-slate-500">Puanlar:</span>
+                        <span class="font-black text-indigo-600">${score} / 50</span>
+                    </div>
+                `;
+
+                if (errors.length > 0) {
+                    document.getElementById('error-section').classList.remove('hidden');
+                    const errorList = document.getElementById('error-list');
+                    errorList.innerHTML = '';
+                    errors.forEach(err => {
+                        const div = document.createElement('div');
+                        div.className = "error-item p-4 rounded-xl shadow-sm fade-in";
+                        div.innerHTML = `
+                            <p class="text-slate-800 font-bold mb-2">${err.q}</p>
+                            <p class="text-emerald-700 text-sm font-semibold">Doğru cevap: ${err.correct}</p>
+                        `;
+                        errorList.appendChild(div);
+                    });
+                }
+
+                this.renderChart();
+            },
+            renderChart() {
+                const ctx = document.getElementById('resultsChart').getContext('2d');
+                if(chartInstance) chartInstance.destroy();
+                
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: wrapLabels(['Doğru', 'Yanlış']),
+                        datasets: [{
+                            data: [score, 50 - score],
+                            backgroundColor: ['#4f46e5', '#e2e8f0'],
+                            borderWidth: 0,
+                            borderRadius: 10
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(items) {
+                                        let label = items[0].chart.data.labels[items[0].dataIndex];
+                                        return Array.isArray(label) ? label.join(' ') : label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            copyResults() {
+                const text = `3D Baskı Test Sonuçları:\nPuan: ${score} / 50 (%${(score/50)*100})\nHata Sayısı: ${errors.length}`;
+                const buffer = document.getElementById('copy-buffer');
+                buffer.value = text;
+                buffer.select();
+                document.execCommand('copy');
+                
+                const btn = event.currentTarget;
+                const original = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> Kopyalandı!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            },
+            sendEmail() {
+                const subject = encodeURIComponent("3D Prototipleme Test Sonuçları");
+                const body = encodeURIComponent(`3D Baskı teknik testini tamamladım.\n\nFinal Skoru: 50 üzerinden ${score} (%${(score/50)*100}).`);
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            }
+        };
+
+        function wrapLabels(labels) {
+            return labels.map(label => {
+                if (label.length > 16) {
+                    const words = label.split(' ');
+                    const lines = [];
+                    let current = "";
+                    words.forEach(w => {
+                        if ((current + w).length > 16) {
+                            lines.push(current.trim());
+                            current = w + " ";
+                        } else {
+                            current += w + " ";
+                        }
+                    });
+                    lines.push(current.trim());
+                    return lines;
+                }
+                return label;
+            });
+        }
+    </script>
+</body>
+</html>
