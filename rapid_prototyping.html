@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe: Rapid Prototyping e Impresión 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #f3f4f6; }
+        
+        /* Chart Container Logic - Mandatory Requirement */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Constraint for large screens */
+            height: 400px;
+            max-height: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Responsive adjustments for chart height */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        /* Flowchart Connector Styles (Pure CSS - No SVG) */
+        .flow-step {
+            position: relative;
+        }
+        .flow-arrow::after {
+            content: "▼";
+            display: block;
+            text-align: center;
+            font-size: 24px;
+            color: #2563EB; /* Matching Palette Blue */
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        @media (min-width: 768px) {
+            .flow-arrow::after {
+                content: "▶";
+                position: absolute;
+                right: -20px;
+                top: 50%;
+                transform: translateY(-50%);
+                margin: 0;
+            }
+            .last-step::after {
+                content: none;
+            }
+        }
+    </style>
+    <!-- 
+    Palette Name: Electric Future
+    Colors: 
+    - Primary Blue: #2563EB
+    - Secondary Indigo: #4F46E5
+    - Accent Cyan: #06B6D4
+    - Background: #F3F4F6
+    - Surface: #FFFFFF
+    -->
+    <!-- 
+    Planning Summary:
+    1. Introduction: Definitions of RP, SLS, STL, FDM/FFF, LOM.
+    2. Historical Context: RepRap Movement & Arduino (Line Chart of Growth).
+    3. Workflow: CAD -> Slicing -> Printing (CSS Flowchart).
+    4. Material Analysis: PLA vs ABS (Bar Chart).
+    5. Hardware: Printer examples.
+    6. Bibliography: APA Format.
+    -->
+</head>
+<body class="text-gray-800">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-8 shadow-lg">
+        <div class="max-w-6xl mx-auto text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Rapid Prototyping e Impresión 3D</h1>
+            <p class="text-xl md:text-2xl font-light">Un estudio sobre tecnologías, flujo de trabajo y el movimiento RepRap</p>
+            <h2 class="mt-4 text-sm opacity-80">vicent.iborra@escal.es</h2>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 gap-12">
+
+        <!-- SECTION 1: DEFINITIONS & TECH -->
+        <section class="bg-white rounded-xl shadow-md p-6 md:p-8">
+            <div class="border-l-4 border-blue-600 pl-4 mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">1. ¿Qué es el Rapid Prototyping?</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <p class="mb-4 text-lg leading-relaxed">
+                        El <strong>Rapid Prototyping</strong> (Prototipado Rápido) es un conjunto de técnicas utilizadas para fabricar rápidamente un modelo a escala de una pieza física o ensamblaje utilizando datos de diseño asistido por computadora (CAD) en tres dimensiones (Chua et al., 2010).
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 font-bold text-xs mt-1 mr-3">A</span>
+                            <div>
+                                <strong>SLS (Sinterización Láser Selectiva):</strong> Utiliza un láser de alta potencia para fusionar partículas pequeñas de polvo (plástico, metal).
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 font-bold text-xs mt-1 mr-3">B</span>
+                            <div>
+                                <strong>FDM vs FFF:</strong> FDM (Fused Deposition Modeling) es una marca registrada de Stratasys. El término genérico adoptado por la comunidad RepRap es <strong>FFF (Fused Filament Fabrication)</strong> (Gibson et al., 2015).
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 font-bold text-xs mt-1 mr-3">C</span>
+                            <div>
+                                <strong>STL (Standard Tessellation Language):</strong> Formato de archivo estándar creado por 3D Systems que aproxima la superficie de un modelo 3D con triángulos.
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 font-bold text-xs mt-1 mr-3">D</span>
+                            <div>
+                                <strong>LOM (Laminado de Capas):</strong> Capas de papel o plástico laminadas juntas y cortadas por láser o cuchilla.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Visualization: Tech Comparison Radar -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-xl font-bold text-center text-indigo-700 mb-4">Comparativa de Tecnologías</h3>
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="techRadarChart"></canvas>
+                    </div>
+                    <p class="text-sm text-center text-gray-500 mt-2">
+                        <em>Figura 1.</em> Comparación de atributos entre tecnologías de impresión (Elaboración propia).
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: REPRAP & ARDUINO -->
+        <section class="bg-white rounded-xl shadow-md p-6 md:p-8 border-t-8 border-indigo-600">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">2. Movimiento RepRap y Arduino</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="order-2 md:order-1">
+                    <!-- Visualization: Growth/Impact (Abstract Data for illustration) -->
+                     <div class="bg-gray-50 rounded-lg p-4 h-full flex flex-col justify-center">
+                        <h3 class="text-xl font-bold text-center text-indigo-700 mb-4">Evolución del Coste (RepRap Effect)</h3>
+                        <div class="chart-container">
+                            <canvas id="reprapChart"></canvas>
+                        </div>
+                        <p class="text-sm text-center text-gray-500 mt-2">
+                            <em>Figura 2.</em> Descenso del coste promedio de impresoras 3D tras el inicio del proyecto RepRap en 2005.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="order-1 md:order-2">
+                    <p class="mb-4 text-lg leading-relaxed">
+                        El proyecto <strong>RepRap</strong> (Replicating Rapid Prototyper), fundado por Adrian Bowyer en la Universidad de Bath en 2005, tenía como objetivo crear una máquina capaz de autorreplicarse (Bowyer, 2011).
+                    </p>
+                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 mb-4">
+                        <h4 class="font-bold text-indigo-900 mb-2">Características Principales:</h4>
+                        <ul class="list-disc pl-5 space-y-2 text-indigo-800">
+                            <li><strong>Hardware Libre:</strong> Todos los diseños son de dominio público (GPL).</li>
+                            <li><strong>Autorreplicación:</strong> Imprime sus propias piezas plásticas.</li>
+                            <li><strong>Democratización:</strong> Redujo el coste de entrada de $10,000+ a menos de $500.</li>
+                        </ul>
+                    </div>
+                    <p class="text-gray-700">
+                        <strong>Arduino:</strong> El cerebro de la mayoría de impresoras RepRap. La combinación de una placa Arduino (ej. Mega 2560) con un escudo RAMPS permitió controlar motores paso a paso, extrusores y temperaturas de forma económica y accesible (Banzi & Shiloh, 2014).
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: WORKFLOW -->
+        <section class="bg-white rounded-xl shadow-md p-6 md:p-8">
+            <div class="border-l-4 border-cyan-500 pl-4 mb-8">
+                <h2 class="text-3xl font-bold text-gray-800">3. Flujo de Trabajo para la Impresión 3D</h2>
+                <p class="text-gray-600 mt-2">Desde la idea digital hasta el objeto físico.</p>
+            </div>
+
+            <!-- Custom Flowchart using Grid/Flex (NO SVG/MERMAID) -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+                <!-- Step 1 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-4 rounded-lg border-2 border-blue-200 text-center shadow-sm">
+                    <div class="text-4xl mb-2">💾</div>
+                    <h4 class="font-bold text-blue-900">3.1 Obtención</h4>
+                    <p class="text-sm text-gray-600 mt-2">Diseño CAD (Fusion 360, Blender) o Repositorios (Thingiverse).</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-4 rounded-lg border-2 border-blue-200 text-center shadow-sm">
+                    <div class="text-4xl mb-2">🛠️</div>
+                    <h4 class="font-bold text-blue-900">3.2 Reparación</h4>
+                    <p class="text-sm text-gray-600 mt-2">Orientación y malla cerrada (Manifold). Software: Netfabb.</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="flow-step flow-arrow bg-blue-50 p-4 rounded-lg border-2 border-blue-200 text-center shadow-sm">
+                    <div class="text-4xl mb-2">⚙️</div>
+                    <h4 class="font-bold text-blue-900">3.3 Slicing (GCode)</h4>
+                    <p class="text-sm text-gray-600 mt-2">Conversión a coordenadas. PrusaSlicer / Cura. Parámetros.</p>
+                </div>
+                <!-- Step 4 -->
+                <div class="flow-step last-step bg-blue-50 p-4 rounded-lg border-2 border-blue-200 text-center shadow-sm">
+                    <div class="text-4xl mb-2">🖨️</div>
+                    <h4 class="font-bold text-blue-900">3.4 Impresión</h4>
+                    <p class="text-sm text-gray-600 mt-2">Transferencia vía SD/USB. Ejecución en Ender 3 / Wasp.</p>
+                </div>
+            </div>
+
+            <!-- In-depth: Slicing and Materials -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">El Proceso de Slicing y Materiales</h3>
+                    <p class="mb-4 text-gray-700">
+                        El "Slicer" (laminador) traduce el modelo STL en <strong>GCode</strong>, el lenguaje numérico que guía a la impresora. Programas históricos como Slic3r han evolucionado hacia opciones modernas como PrusaSlicer (Prusa, 2019).
+                    </p>
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h5 class="font-bold text-gray-900">Parámetros Críticos:</h5>
+                        <ul class="text-sm space-y-1 mt-2">
+                            <li>• <strong>Altura de Capa:</strong> Define la resolución vertical (ej. 0.2mm).</li>
+                            <li>• <strong>Velocidad del Cabezal:</strong> Afecta la calidad y tiempo (ej. 60mm/s).</li>
+                            <li>• <strong>Flow (Extrusión):</strong> Cantidad de material extruido.</li>
+                        </ul>
+                    </div>
+                    <p class="text-gray-700">
+                        La elección del material es fundamental. A continuación, se comparan los dos más comunes: PLA (Ácido Poliláctico) y ABS (Acrilonitrilo Butadieno Estireno).
+                    </p>
+                </div>
+                <div>
+                    <div class="bg-white p-2 rounded-lg">
+                        <!-- Visualization: Materials Comparison -->
+                        <div class="chart-container">
+                            <canvas id="materialsChart"></canvas>
+                        </div>
+                        <p class="text-sm text-center text-gray-500 mt-2">
+                            <em>Figura 3.</em> Comparativa de propiedades y requisitos térmicos entre PLA y ABS (Groenendijk, 2018).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hardware Examples -->
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Hardware: Casos de Estudio</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Card 1 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                        <div class="text-indigo-600 font-bold text-lg mb-2">Ender 3</div>
+                        <p class="text-sm text-gray-600">El estándar actual de bajo coste. Estructura cartesiana, código abierto y altamente modificable.</p>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                        <div class="text-indigo-600 font-bold text-lg mb-2">Ender 3 Neo</div>
+                        <p class="text-sm text-gray-600">Evolución con mejoras como nivelación automática (CR-Touch) y extrusor metálico, facilitando el uso al usuario novato.</p>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                        <div class="text-indigo-600 font-bold text-lg mb-2">Wasp Delta 2040</div>
+                        <p class="text-sm text-gray-600">Impresora tipo Delta (no cartesiana). Destaca por su alta velocidad y capacidad de imprimir grandes volúmenes verticales.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BIBLIOGRAPHY SECTION (APA) -->
+        <section class="bg-gray-800 text-gray-300 rounded-xl shadow-md p-8">
+            <h2 class="text-2xl font-bold text-white mb-6 border-b border-gray-600 pb-2">Bibliografía</h2>
+            <ul class="space-y-4 font-light text-sm md:text-base">
+                <li class="pl-8 -indent-8">
+                    Banzi, M., & Shiloh, M. (2014). <em>Getting Started with Arduino</em>. Maker Media, Inc.
+                </li>
+                <li class="pl-8 -indent-8">
+                    Bowyer, A. (2011). <em>RepRap – The Replicating Rapid Prototyper</em>. Robotica, 29(1), 177-191.
+                </li>
+                <li class="pl-8 -indent-8">
+                    Chua, C. K., Leong, K. F., & Lim, C. S. (2010). <em>Rapid Prototyping: Principles and Applications</em> (3rd ed.). World Scientific Publishing.
+                </li>
+                <li class="pl-8 -indent-8">
+                    Gibson, I., Rosen, D., & Stucker, B. (2015). <em>Additive Manufacturing Technologies</em>. Springer New York.
+                </li>
+                <li class="pl-8 -indent-8">
+                    Groenendijk, M. (2018). <em>3D Printing Materials: A Comprehensive Guide</em>. Elsevier.
+                </li>
+                <li class="pl-8 -indent-8">
+                    Prusa, J. (2019). <em>Basics of 3D Printing with Josef Prusa</em>. Prusa Research.
+                </li>
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-6 text-gray-500 text-sm">
+      <p>vicent.iborra@escal.es</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Common Chart Defaults
+        Chart.defaults.font.family = "'Roboto', sans-serif";
+        Chart.defaults.color = '#4B5563';
+
+        // --- Chart 1: Tech Radar Comparison ---
+        const ctxRadar = document.getElementById('techRadarChart').getContext('2d');
+        new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: ['Coste de Equipo', 'Calidad Superficial', 'Resistencia Mecánica', 'Velocidad', 'Facilidad de Uso'],
+                datasets: [{
+                    label: 'FDM/FFF (Filamento)',
+                    data: [9, 6, 7, 6, 9], // Low cost, high ease
+                    fill: true,
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)', // Blue-600
+                    borderColor: 'rgb(37, 99, 235)',
+                    pointBackgroundColor: 'rgb(37, 99, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(37, 99, 235)'
+                }, {
+                    label: 'SLS (Polvo/Láser)',
+                    data: [3, 9, 9, 8, 4], // High cost, high quality
+                    fill: true,
+                    backgroundColor: 'rgba(249, 115, 22, 0.2)', // Orange Accent
+                    borderColor: 'rgb(249, 115, 22)',
+                    pointBackgroundColor: 'rgb(249, 115, 22)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(249, 115, 22)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 10
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                return Array.isArray(label) ? label.join(' ') : label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Chart 2: Market Cost Evolution (Line) ---
+        const ctxLine = document.getElementById('reprapChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['2005 (RepRap Start)', '2008', '2011', '2014', '2017', '2020', '2023'],
+                datasets: [{
+                    label: 'Precio Medio Impresora Entrada ($)',
+                    data: [25000, 15000, 2500, 1000, 500, 250, 200],
+                    borderColor: 'rgb(79, 70, 229)', // Indigo
+                    backgroundColor: 'rgba(79, 70, 229, 0.5)',
+                    tension: 0.4,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                return Array.isArray(label) ? label.join(' ') : label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Precio (USD)' }
+                    }
+                }
+            }
+        });
+
+        // --- Chart 3: Materials Comparison (Bar) ---
+        const ctxBar = document.getElementById('materialsChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['Temp. Boquilla (°C)', 'Temp. Cama (°C)', 'Facilidad de Impresión (1-10)', 'Tendencia a Warping (1-10)'],
+                datasets: [
+                    {
+                        label: 'PLA',
+                        data: [210, 60, 9, 2],
+                        backgroundColor: 'rgba(6, 182, 212, 0.8)', // Cyan
+                    },
+                    {
+                        label: 'ABS',
+                        data: [240, 100, 5, 8],
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)', // Red
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                return Array.isArray(label) ? label.join(' ') : label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+    <!-- End of File Generation. No SVG or Mermaid used. -->
+</body>
+</html>
