@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Final: Prototipado Rápido e Impresión 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f5f3ff; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            margin: auto;
+        }
+        /* Progress Bar Animation */
+        #progress-bar { transition: width 0.4s ease-in-out; }
+    </style>
+    <!-- 
+    Palette Selection: Energetic & Playful
+    Colors: 
+    - Primary: #7c3aed (Violet-600)
+    - Secondary: #db2777 (Pink-600)
+    - Background: #f5f3ff
+    -->
+</head>
+<body class="text-slate-900 p-4 md:p-8">
+
+    <div id="app" class="max-w-3xl mx-auto">
+        <!-- START SCREEN -->
+        <div id="start-screen" class="glass-card rounded-3xl p-8 shadow-2xl text-center border-t-8 border-violet-600">
+            <div class="text-6xl mb-6">🎓</div>
+            <h1 class="text-4xl font-extrabold text-violet-900 mb-4">Test de preguntas</h1>
+            <p class="text-xl text-slate-600 mb-8">Este cuestionario consta de 50 preguntas basadas en el estudio de Prototipado Rápido, Tecnologías 3D y Movimiento RepRap.</p>
+            <div class="grid grid-cols-2 gap-4 mb-8 text-left max-w-sm mx-auto">
+                <div class="bg-violet-50 p-3 rounded-xl border border-violet-100">
+                    <span class="block font-bold text-violet-600">Total</span> 50 Preguntas
+                </div>
+                <div class="bg-violet-50 p-3 rounded-xl border border-violet-100">
+                    <span class="block font-bold text-violet-600">Tiempo</span> Sin límite
+                </div>
+            </div>
+            <button onclick="quiz.start()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95">
+                Comenzar Cuestionario
+            </button>
+        </div>
+
+        <!-- QUIZ CONTENT -->
+        <div id="quiz-container" class="hidden">
+            <!-- Progress Header -->
+            <div class="flex justify-between items-center mb-4 px-2">
+                <span class="text-violet-900 font-bold" id="progress-text">Pregunta 1 de 50</span>
+                <span class="text-slate-500 text-sm font-medium" id="score-live">Puntos: 0</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-3 mb-8">
+                <div id="progress-bar" class="bg-gradient-to-r from-violet-600 to-pink-600 h-3 rounded-full" style="width: 2%"></div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="glass-card rounded-3xl p-8 shadow-xl border border-slate-100 min-h-[400px] flex flex-col justify-between">
+                <div id="question-area">
+                    <h2 id="question-title" class="text-2xl font-bold text-slate-800 mb-6 leading-tight"></h2>
+                    <div id="options-grid" class="space-y-3">
+                        <!-- Options will be injected here -->
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end">
+                    <button id="next-btn" onclick="quiz.next()" disabled class="bg-slate-300 text-white font-bold py-3 px-8 rounded-2xl cursor-not-allowed transition-all">
+                        Siguiente Pregunta
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS SCREEN -->
+        <div id="results-screen" class="hidden glass-card rounded-3xl p-8 shadow-2xl border-t-8 border-pink-600">
+            <h2 class="text-3xl font-extrabold text-center text-slate-900 mb-2">¡Resultado Final!</h2>
+            <div id="final-score" class="text-center text-6xl font-black text-pink-600 mb-6">0 / 50</div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-10">
+                <div class="chart-container">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Resumen del Desempeño:</h3>
+                    <div id="performance-summary" class="space-y-4 text-slate-600">
+                        <!-- Summary injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="quiz.sendEmail()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-2">
+                    <span>📩</span> Enviar Nota por Correo
+                </button>
+                <button onclick="window.location.reload()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 px-8 rounded-2xl border border-slate-200">
+                    Reiniciar Test
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { q: "¿Qué significa SLS en prototipado rápido?", a: ["Sinterización Láser Selectiva", "Sistema Láser Sintético", "Soldadura Láser Secuencial", "Sinterización Laminada Suave"], c: 0 },
+            { q: "La Estereolitografía utiliza como material principal...", a: ["Polvo metálico", "Filamento termoplástico", "Resina fotosensible", "Capas de papel"], c: 2 },
+            { q: "¿Cuál es la extensión de archivo estándar para modelos 3D?", a: ["OBJ", "GCODE", "STL", "CAD"], c: 2 },
+            { q: "FDM son las siglas de...", a: ["Fused Deposition Modeling", "Fast Design Manufacturing", "Fine Digital Method", "Fluid Deposition Mechanism"], c: 0 },
+            { q: "¿Qué término genérico usa la comunidad RepRap para FDM?", a: ["LOM", "FFF", "SLA", "DLP"], c: 1 },
+            { q: "El método LOM se basa en...", a: ["Inyección de aglomerante", "Laminado de capas", "Fusión por haz de electrones", "Fotopolimerización"], c: 1 },
+            { q: "¿Quién fundó el movimiento RepRap en 2005?", a: ["Josef Prusa", "Adrian Bowyer", "Massimo Banzi", "Bre Pettis"], c: 1 },
+            { q: "¿Qué placa Arduino es el 'cerebro' estándar de las RepRap?", a: ["Uno", "Nano", "Mega 2560", "Leonardo"], c: 2 },
+            { q: "El primer paso del flujo de trabajo es...", a: ["El Slicing", "La reparación de malla", "La obtención del objeto (CAD/Librería)", "La generación del GCode"], c: 2 },
+            { q: "¿En qué repositorio de objetos 3D es común descargar archivos?", a: ["TraceParts", "GitHub", "StackOverflow", "Netflix"], c: 0 },
+            { q: "Netfabb es un software utilizado principalmente para...", a: ["Diseñar en 3D", "Reparar mallas y comprobar orientación", "Generar GCode", "Controlar motores"], c: 1 },
+            { q: "¿Qué contiene un archivo GCode?", a: ["Una malla triangular", "Instrucciones de coordenadas y comandos", "Una imagen del modelo", "Datos de textura"], c: 1 },
+            { q: "El software Slic3r ha evolucionado hacia el actual...", a: ["Cura", "PrusaSlicer", "Simplify3D", "Fusion 360"], c: 1 },
+            { q: "¿Cuál es la temperatura típica de impresión del PLA?", a: ["100-120°C", "190-220°C", "240-260°C", "300-350°C"], c: 1 },
+            { q: "El material ABS se caracteriza por...", a: ["Ser biodegradable", "Oler a maíz", "Resistencia y necesidad de cama caliente", "No deformarse nunca"], c: 2 },
+            { q: "¿Qué parámetro define la resolución vertical de la pieza?", a: ["Velocidad de extrusión", "Altura de capa", "Velocidad del cabezal", "Infill"], c: 1 },
+            { q: "El 'Flow' en impresión 3D se refiere a...", a: ["La velocidad de movimiento", "La velocidad de extrusión del material", "La temperatura del aire", "El diseño estético"], c: 1 },
+            { q: "La Ender 3 es una impresora de tipo...", a: ["Delta", "Cartesiana", "SLA", "SLS"], c: 1 },
+            { q: "¿Qué ventaja tiene la Ender 3 Neo sobre la Ender 3 original?", a: ["Imprime metal", "Nivelación automática (CR-Touch)", "Es de resina", "No usa GCode"], c: 1 },
+            { q: "La impresora Wasp Delta 2040 destaca por...", a: ["Su forma cúbica", "Ser muy lenta", "Su alta velocidad y arquitectura Delta", "Usar papel"], c: 2 },
+            { q: "¿Qué es el 'Warping'?", a: ["Una mejora estética", "Deformación por contracción térmica", "Un tipo de filamento", "El nombre del extrusor"], c: 1 },
+            { q: "La aglomeración por inyección usa...", a: ["Láser", "Polvo y un adhesivo líquido", "Filamento", "Resina líquida"], c: 1 },
+            { q: "¿Qué significa que una malla es 'Manifold'?", a: ["Que es muy compleja", "Que es cerrada y sin agujeros (imprimible)", "Que tiene muchos colores", "Que es de gran tamaño"], c: 1 },
+            { q: "Solidworks es un ejemplo de software...", a: ["Slicer", "CAD", "Firmware", "S.O."], c: 1 },
+            { q: "¿Qué tecnología NO usa soportes porque el polvo la sujeta?", a: ["FDM", "SLS", "SLA", "FFF"], c: 1 },
+            { q: "Arduino nació en...", a: ["EE.UU.", "Italia", "España", "Alemania"], c: 1 },
+            { q: "El objetivo de RepRap es la...", a: ["Venta masiva", "Autorreplicación", "Invisibilidad", "Miniaturización"], c: 1 },
+            { q: "¿Qué material es de origen vegetal (almidón de maíz)?", a: ["ABS", "Nylon", "PLA", "PETG"], c: 2 },
+            { q: "¿Para qué sirve el comando G28 en GCode?", a: ["Apagar todo", "Home (ir al origen)", "Extruir material", "Cambiar temperatura"], c: 1 },
+            { q: "¿Qué ocurre si la velocidad del cabezal es excesiva?", a: ["La pieza brilla más", "Vibraciones y pérdida de calidad", "Se acaba el filamento", "No pasa nada"], c: 1 },
+            { q: "La cama caliente en ABS sirve para...", a: ["Calentar la habitación", "Mejorar la adhesión y evitar warping", "Secar el plástico", "Decoración"], c: 1 },
+            { q: "¿Qué componente empuja el filamento?", a: ["La boquilla", "El extrusor", "El ventilador", "La correa"], c: 1 },
+            { q: "Un 'Slicer' corta el modelo 3D en...", a: ["Píxeles", "Capas horizontales", "Triángulos", "Cubos"], c: 1 },
+            { q: "¿Qué es el 'Raft'?", a: ["Una base de soporte", "Un tipo de software", "El motor del eje Z", "Un error de impresión"], c: 0 },
+            { q: "En Netfabb, 'Fix Part' sirve para...", a: ["Borrar la pieza", "Cerrar huecos en la malla", "Cambiar el material", "Enviar a imprimir"], c: 1 },
+            { q: "Blender es software libre ideal para...", a: ["Ingeniería mecánica pura", "Modelado orgánico y artístico", "Solo para Slicing", "Reparar hardware"], c: 1 },
+            { q: "El material PLA requiere menos temperatura que el ABS.", a: ["Verdadero", "Falso", "Depende de la marca", "Son iguales"], c: 0 },
+            { q: "¿Qué es el comando M104?", a: ["Mover motor", "Establecer temp. del hotend", "Apagar ventilador", "Finalizar impresión"], c: 1 },
+            { q: "La arquitectura Delta se caracteriza por...", a: ["Tres brazos que se mueven juntos", "Dos motores en el eje X", "Ser de madera", "No tener cama"], c: 0 },
+            { q: "¿Qué empresa fabrica la Ender 3?", a: ["Anycubic", "Creality", "Prusa", "Apple"], c: 1 },
+            { q: "La sinterización láser funde...", a: ["Líquidos", "Polvo", "Sólidos masivos", "Gases"], c: 1 },
+            { q: "Thingiverse es propiedad de...", a: ["MakerBot", "Google", "Facebook", "Microsoft"], c: 0 },
+            { q: "¿Cuál es la función del ventilador de capa?", a: ["Enfriar el motor", "Enfriar el plástico recién extruido", "Limpiar la cama", "Hacer ruido"], c: 1 },
+            { q: "La altura de capa estándar suele ser...", a: ["1.0 mm", "0.2 mm", "0.01 mm", "5.0 mm"], c: 1 },
+            { q: "¿Qué material emite vapores más tóxicos?", a: ["PLA", "ABS", "PETG", "Madera"], c: 1 },
+            { q: "STL significa...", a: ["Standard Triangle Language", "Simple Text Layer", "Sintering Thermal Level", "Standard Tessellation Language"], c: 3 },
+            { q: "El firmware más común en RepRap es...", a: ["Windows", "Marlin", "Android", "Linux"], c: 1 },
+            { q: "Fusion 360 es un software de tipo...", a: ["CAD en la nube", "Slicer gratuito", "Buscador de archivos", "Simulador de vuelo"], c: 0 },
+            { q: "¿Qué eje suele moverse hacia arriba en una cartesiana?", a: ["Eje X", "Eje Y", "Eje Z", "Eje E"], c: 2 },
+            { q: "¿Es la impresión 3D una técnica aditiva?", a: ["No, es sustractiva", "Sí, añade capa sobre capa", "Es manual", "Solo para metal"], c: 1 }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedOption = null;
+        let chartInstance = null;
+
+        const quiz = {
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-container').classList.remove('hidden');
+                this.renderQuestion();
+            },
+            renderQuestion() {
+                const q = quizData[currentQuestion];
+                document.getElementById('question-title').innerText = q.q;
+                document.getElementById('progress-text').innerText = `Pregunta ${currentQuestion + 1} de 50`;
+                document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / 50) * 100}%`;
+                
+                const grid = document.getElementById('options-grid');
+                grid.innerHTML = '';
+                
+                q.a.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-violet-300 hover:bg-violet-50 transition-all font-medium flex items-center gap-4";
+                    btn.innerHTML = `<span class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500">${String.fromCharCode(65 + idx)}</span> ${opt}`;
+                    btn.onclick = () => this.selectOption(idx, btn);
+                    grid.appendChild(btn);
+                });
+                
+                document.getElementById('next-btn').disabled = true;
+                document.getElementById('next-btn').classList.replace('bg-violet-600', 'bg-slate-300');
+                document.getElementById('next-btn').classList.add('cursor-not-allowed');
+            },
+            selectOption(idx, btn) {
+                selectedOption = idx;
+                const allBtns = document.querySelectorAll('#options-grid button');
+                allBtns.forEach(b => b.classList.replace('border-violet-600', 'border-slate-100'));
+                allBtns.forEach(b => b.classList.replace('bg-violet-100', 'bg-white'));
+                
+                btn.classList.replace('border-slate-100', 'border-violet-600');
+                btn.classList.replace('bg-white', 'bg-violet-100');
+                
+                document.getElementById('next-btn').disabled = false;
+                document.getElementById('next-btn').classList.replace('bg-slate-300', 'bg-violet-600');
+                document.getElementById('next-btn').classList.remove('cursor-not-allowed');
+            },
+            next() {
+                if (selectedOption === quizData[currentQuestion].c) {
+                    score++;
+                }
+                document.getElementById('score-live').innerText = `Puntos: ${score}`;
+                
+                currentQuestion++;
+                if (currentQuestion < quizData.length) {
+                    selectedOption = null;
+                    this.renderQuestion();
+                } else {
+                    this.showResults();
+                }
+            },
+            showResults() {
+                document.getElementById('quiz-container').classList.add('hidden');
+                document.getElementById('results-screen').classList.remove('hidden');
+                document.getElementById('final-score').innerText = `${score} / 50`;
+                
+                const percent = (score / 50) * 100;
+                let feedback = "";
+                if(percent >= 90) feedback = "¡Excelente! Eres un experto en fabricación aditiva.";
+                else if(percent >= 70) feedback = "¡Muy bien! Tienes conocimientos sólidos.";
+                else if(percent >= 50) feedback = "Aprobado. Conoces las bases del prototipado.";
+                else feedback = "Necesitas repasar el estudio técnico.";
+
+                document.getElementById('performance-summary').innerHTML = `
+                    <p class="text-lg font-bold text-violet-900">${feedback}</p>
+                    <ul class="text-sm space-y-1">
+                        <li>✅ Aciertos: ${score}</li>
+                        <li>❌ Errores: ${50 - score}</li>
+                        <li>📊 Porcentaje: ${percent}%</li>
+                    </ul>
+                `;
+
+                this.renderChart();
+            },
+            renderChart() {
+                const ctx = document.getElementById('resultsChart').getContext('2d');
+                if(chartInstance) chartInstance.destroy();
+                
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Aciertos', 'Errores'],
+                        datasets: [{
+                            data: [score, 50 - score],
+                            backgroundColor: ['#7c3aed', '#f1f5f9'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '80%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            },
+            sendEmail() {
+                const subject = encodeURIComponent("Resultado Examen Prototipado 3D");
+                const body = encodeURIComponent(`He completado el examen de Prototipado Rápido e Impresión 3D.\n\nMi resultado final es: ${score} de 50 preguntas correctas (${(score/50)*100}%).\n\nEnviado desde el Informe Interactivo.`);
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            }
+        };
+
+        // Pre-flight check logic for labels > 16 chars (Mandatory Rule)
+        function processLabels(labels) {
+            return labels.map(label => {
+                if (label.length > 16) {
+                    const words = label.split(' ');
+                    const lines = [];
+                    let current = "";
+                    words.forEach(w => {
+                        if ((current + w).length > 16) {
+                            lines.push(current.trim());
+                            current = w + " ";
+                        } else {
+                            current += w + " ";
+                        }
+                    });
+                    lines.push(current.trim());
+                    return lines;
+                }
+                return label;
+            });
+        }
+    </script>
+</body>
+</html>
